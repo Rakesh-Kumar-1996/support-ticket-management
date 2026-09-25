@@ -236,6 +236,57 @@ class TicketApiIntegrationTest {
                 .andExpect(jsonPath("$.code", is(RestExceptionHandler.VALIDATION_ERROR)));
     }
 
+    @Test
+    void listPaginationAndSort() throws Exception {
+        createTicket("Alpha", null, null);
+        createTicket("Beta", null, null);
+        createTicket("Gamma", null, null);
+
+        mockMvc.perform(get("/tickets").param("page", "1").param("size", "2").param("sort", "createdAt,desc"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(2)))
+                .andExpect(jsonPath("$.totalElements", is(3)))
+                .andExpect(jsonPath("$.totalPages", is(2)))
+                .andExpect(jsonPath("$.page", is(1)))
+                .andExpect(jsonPath("$.pageSize", is(2)))
+                .andExpect(jsonPath("$.sort", is("createdAt,desc")));
+
+        mockMvc.perform(get("/tickets").param("page", "2").param("size", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items", hasSize(1)));
+    }
+
+    @Test
+    void invalidPaginationAndSortReturn400() throws Exception {
+        mockMvc.perform(get("/tickets").param("page", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is(RestExceptionHandler.VALIDATION_ERROR)));
+
+        mockMvc.perform(get("/tickets").param("size", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is(RestExceptionHandler.VALIDATION_ERROR)));
+
+        mockMvc.perform(get("/tickets").param("sort", "unknown,desc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code", is(RestExceptionHandler.VALIDATION_ERROR)));
+    }
+
+    @Test
+    void summaryReturnsStatusCounts() throws Exception {
+        createTicket("Open ticket", null, null);
+        String cancelledId = createTicket("Cancelled ticket", null, null);
+        mockMvc.perform(patch("/tickets/" + cancelledId + "/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"CANCELLED\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/tickets/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.total", is(2)))
+                .andExpect(jsonPath("$.open", is(1)))
+                .andExpect(jsonPath("$.cancelled", is(1)));
+    }
+
     @ParameterizedTest
     @CsvSource({
             "OPEN,IN_PROGRESS",

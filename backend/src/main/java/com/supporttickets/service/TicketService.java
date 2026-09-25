@@ -9,17 +9,23 @@ import com.supporttickets.dto.CommentResponse;
 import com.supporttickets.dto.CreateCommentRequest;
 import com.supporttickets.dto.CreateTicketRequest;
 import com.supporttickets.dto.TicketDetailResponse;
+import com.supporttickets.dto.TicketListQuery;
 import com.supporttickets.dto.TicketListResponse;
 import com.supporttickets.dto.TicketRequestValidator;
 import com.supporttickets.dto.TicketResponse;
+import com.supporttickets.dto.TicketSummaryResponse;
 import com.supporttickets.dto.UpdateStatusRequest;
 import com.supporttickets.dto.UpdateTicketRequest;
 import com.supporttickets.repository.CommentRepository;
 import com.supporttickets.repository.TicketRepository;
+import com.supporttickets.repository.TicketSpecifications;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.EnumMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -57,13 +63,41 @@ public class TicketService {
     }
 
     @Transactional(readOnly = true)
-    public TicketListResponse list(String q, String status) {
+    public TicketListResponse list(String q, String status, Integer page, Integer size, String sort) {
         TicketStatus statusFilter = TicketRequestValidator.parseOptionalListStatus(status);
         String keyword = (q == null || q.isBlank()) ? null : q;
-        return new TicketListResponse(
-                ticketRepository.search(keyword, statusFilter).stream()
-                        .map(TicketMapper::toTicketResponse)
-                        .toList()
+        TicketListQuery query = TicketRequestValidator.parseListQuery(page, size, sort);
+        Page<Ticket> result = TicketSpecifications.findPage(ticketRepository, keyword, statusFilter, query.pageable());
+
+        if (query.paginated()) {
+            return new TicketListResponse(
+                    result.stream().map(TicketMapper::toTicketResponse).toList(),
+                    result.getTotalElements(),
+                    result.getTotalPages(),
+                    result.getNumber() + 1,
+                    result.getSize(),
+                    query.sortParam()
+            );
+        }
+        return new TicketListResponse(result.stream().map(TicketMapper::toTicketResponse).toList());
+    }
+
+    @Transactional(readOnly = true)
+    public TicketSummaryResponse getSummary() {
+        Map<TicketStatus, Long> counts = new EnumMap<>(TicketStatus.class);
+        for (TicketStatus status : TicketStatus.values()) {
+            counts.put(status, 0L);
+        }
+        for (Object[] row : ticketRepository.countByStatus()) {
+            counts.put((TicketStatus) row[0], (Long) row[1]);
+        }
+        return new TicketSummaryResponse(
+                ticketRepository.count(),
+                counts.get(TicketStatus.OPEN),
+                counts.get(TicketStatus.IN_PROGRESS),
+                counts.get(TicketStatus.RESOLVED),
+                counts.get(TicketStatus.CLOSED),
+                counts.get(TicketStatus.CANCELLED)
         );
     }
 

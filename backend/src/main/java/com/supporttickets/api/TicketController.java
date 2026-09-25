@@ -6,6 +6,7 @@ import com.supporttickets.dto.CreateTicketRequest;
 import com.supporttickets.dto.TicketDetailResponse;
 import com.supporttickets.dto.TicketListResponse;
 import com.supporttickets.dto.TicketResponse;
+import com.supporttickets.dto.TicketSummaryResponse;
 import com.supporttickets.dto.UpdateStatusRequest;
 import com.supporttickets.dto.UpdateTicketRequest;
 import com.supporttickets.service.TicketService;
@@ -38,12 +39,20 @@ public class TicketController {
         return ResponseEntity.created(URI.create("/api/tickets/" + created.id())).body(created);
     }
 
+    @GetMapping("/summary")
+    public TicketSummaryResponse summary() {
+        return ticketService.getSummary();
+    }
+
     @GetMapping
     public TicketListResponse list(
             @RequestParam(required = false) String q,
-            @RequestParam(required = false) String status
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(required = false) String sort
     ) {
-        return ticketService.list(q, status);
+        return ticketService.list(q, status, page, size, sort);
     }
 
     @GetMapping("/{id}")

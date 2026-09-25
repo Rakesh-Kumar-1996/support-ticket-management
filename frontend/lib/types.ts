@@ -32,6 +32,32 @@ export interface TicketDetail extends Ticket {
 
 export interface TicketListResponse {
   items: Ticket[];
+  totalElements?: number;
+  totalPages?: number;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+}
+
+export interface TicketSummaryResponse {
+  total: number;
+  open: number;
+  inProgress: number;
+  resolved: number;
+  closed: number;
+  cancelled: number;
+}
+
+export type TicketSortField = "createdAt" | "updatedAt" | "title" | "priority" | "status";
+export type TicketSortDirection = "asc" | "desc";
+
+export interface ListTicketsParams {
+  q?: string;
+  status?: string;
+  page?: number;
+  pageSize?: number;
+  sort?: string;
+  signal?: AbortSignal;
 }
 
 export interface CreateTicketRequest {

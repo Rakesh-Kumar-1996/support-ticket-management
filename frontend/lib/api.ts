@@ -1,10 +1,13 @@
+import { buildListTicketsQuery } from "@/lib/ticket-list-params";
 import type {
   ApiErrorBody,
   CreateCommentRequest,
   CreateTicketRequest,
+  ListTicketsParams,
   Ticket,
   TicketDetail,
   TicketListResponse,
+  TicketSummaryResponse,
   UpdateStatusRequest,
   UpdateTicketRequest,
 } from "@/lib/types";
@@ -26,10 +29,14 @@ async function parseJson<T>(response: Response): Promise<T | undefined> {
   if (!text) {
     return undefined;
   }
-  return JSON.parse(text) as T;
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return undefined;
+  }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+async function request<T>(path: string, init?: RequestInit & { signal?: AbortSignal }): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
@@ -39,6 +46,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
         ...(init?.body ? { "Content-Type": "application/json" } : {}),
         ...init?.headers,
       },
+      signal: init?.signal,
     });
   } catch {
     throw new TypeError("Network request failed");
@@ -55,7 +63,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       code: response.status >= 500 ? "INTERNAL_ERROR" : "REQUEST_FAILED",
       message:
         response.status >= 500
-          ? "The server encountered an error. Please try again later."
+          ? "The API is unavailable. Start the Spring Boot backend on port 8080 and try again."
           : `Request failed (${response.status}).`,
       path: `${API_BASE}${path}`,
       fieldErrors: [],
@@ -69,26 +77,28 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   const data = await parseJson<T>(response);
   if (data === undefined) {
-    throw new Error("Empty response from API");
+    throw new ApiError({
+      status: response.status,
+      error: response.statusText || "Error",
+      code: "INVALID_RESPONSE",
+      message:
+        "The API returned an invalid response. Start the Spring Boot backend on port 8080 and try again.",
+      path: `${API_BASE}${path}`,
+      fieldErrors: [],
+    });
   }
   return data;
 }
 
-export function listTickets(params?: {
-  q?: string;
-  status?: string;
-}): Promise<TicketListResponse> {
-  const search = new URLSearchParams();
-  const q = params?.q?.trim();
-  const status = params?.status?.trim();
-  if (q) {
-    search.set("q", q);
-  }
-  if (status) {
-    search.set("status", status);
-  }
-  const query = search.toString();
-  return request<TicketListResponse>(`/tickets${query ? `?${query}` : ""}`);
+export function listTickets(params?: ListTicketsParams): Promise<TicketListResponse> {
+  const query = buildListTicketsQuery(params);
+  return request<TicketListResponse>(`/tickets${query}`, {
+    signal: params?.signal,
+  });
+}
+
+export function getTicketSummary(signal?: AbortSignal): Promise<TicketSummaryResponse> {
+  return request<TicketSummaryResponse>("/tickets/summary", { signal });
 }
 
 export function getTicket(id: string): Promise<TicketDetail> {

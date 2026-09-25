@@ -128,8 +128,34 @@ class TicketServiceTest {
         CreateTicketRequest beta = request("Beta");
         beta.setDescription("other");
         ticketService.create(beta);
-        assertEquals(1, ticketService.list("NEEDLE", "OPEN").items().size());
-        assertEquals(2, ticketService.list(null, null).items().size());
+        assertEquals(1, ticketService.list("NEEDLE", "OPEN", null, null, null).items().size());
+        assertEquals(2, ticketService.list(null, null, null, null, null).items().size());
+    }
+
+    @Test
+    void summaryReturnsCountsByStatus() {
+        ticketService.create(request("Open one"));
+        TicketResponse cancelled = ticketService.create(request("Cancelled one"));
+        ticketService.changeStatus(cancelled.id(), status("CANCELLED"));
+
+        var summary = ticketService.getSummary();
+        assertEquals(2, summary.total());
+        assertEquals(1, summary.open());
+        assertEquals(1, summary.cancelled());
+    }
+
+    @Test
+    void paginatedListReturnsMetadata() {
+        ticketService.create(request("One"));
+        ticketService.create(request("Two"));
+        ticketService.create(request("Three"));
+
+        var response = ticketService.list(null, null, 1, 2, "createdAt,desc");
+        assertEquals(2, response.items().size());
+        assertEquals(3L, response.totalElements());
+        assertEquals(2, response.totalPages());
+        assertEquals(1, response.page());
+        assertEquals(2, response.pageSize());
     }
 
     private static CreateTicketRequest request(String title) {

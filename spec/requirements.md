@@ -146,7 +146,7 @@ Enforced on the **backend**. Frontend may mirror them for UX.
 |----|------|
 | OOS-001 | Authentication and authorization |
 | OOS-002 | User table / assignee as a foreign key |
-| OOS-003 | Pagination of ticket lists |
+| OOS-003 | ~~Pagination of ticket lists~~ (implemented in v1.1 as optional `page`/`size` on list) |
 | OOS-004 | Delete ticket |
 | OOS-005 | Edit or delete comments |
 | OOS-006 | Reopening tickets (any transition not in the v1 table) |

@@ -14,6 +14,8 @@
 | AD-API-004 | List default order: `createdAt` descending, then `id` descending. |
 | AD-API-005 | Keyword match is case-insensitive substring on `title` **or** `description` (SQL `ILIKE` / equivalent). Both fields are searched; a ticket matches if either field contains `q`. |
 | AD-API-006 | Query `q` and `status` are both optional; when both are present they are **AND**ed. |
+| AD-API-010 | Optional `page`, `size`, and `sort` enable paginated listing. When omitted, return all matches with default order. |
+| AD-API-011 | `GET /api/tickets/summary` returns aggregate counts by status for the dashboard. |
 
 ---
 
@@ -147,20 +149,53 @@ Do not send `id`, `status`, `createdAt`, `updatedAt`. If sent, they are ignored 
 |------|----------|------------------------|
 | q | no | Keyword; case-insensitive substring on title or description. Missing or blank: no keyword filter. |
 | status | no | Exact status enum. Invalid value: 400. |
+| page | no | 1-based page index when paginating. Requires `size` or defaults `size` to 20. Invalid if `< 1`. |
+| size | no | Page size when paginating (max 100). Invalid if `< 1` or `> 100`. |
+| sort | no | `field,direction` where field is `createdAt`, `updatedAt`, `title`, `priority`, or `status`; direction is `asc` or `desc`. Default `createdAt,desc`. Secondary sort is always `id DESC`. |
 
-Pagination is out of scope: return all matches.
+When `page` or `size` is omitted, return all matches (v1-compatible behaviour). When paginating, include metadata fields.
 
 **Success:** `200 OK`
 
 ```json
 {
-  "items": [ { "...": "ticket list item" } ]
+  "items": [ { "...": "ticket list item" } ],
+  "totalElements": 42,
+  "totalPages": 3,
+  "page": 1,
+  "pageSize": 20,
+  "sort": "createdAt,desc"
 }
 ```
 
+Metadata fields are omitted when the request is unpaginated.
+
 **AD-API-008:** Envelope `{ "items": [ ... ] }` rather than a bare array.
 
-**Errors:** `400` if `status` is not a valid enum.
+**Errors:** `400` if `status`, `page`, `size`, or `sort` is invalid.
+
+---
+
+### 3.2a Ticket summary
+
+| | |
+|--|--|
+| **Endpoint** | `/api/tickets/summary` |
+| **Method** | `GET` |
+| **Purpose** | Dashboard counts by status |
+
+**Success:** `200 OK`
+
+```json
+{
+  "total": 42,
+  "open": 10,
+  "inProgress": 5,
+  "resolved": 8,
+  "closed": 17,
+  "cancelled": 2
+}
+```
 
 ---
 

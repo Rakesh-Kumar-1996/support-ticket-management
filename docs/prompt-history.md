@@ -1215,3 +1215,104 @@ Date: 2026-09-25
 **Files:** `TicketListView.tsx`, `AppShell.tsx`, `app/globals.css`.
 
 **Dependencies:** None. Backend/API/spec/plan unchanged.
+
+---
+
+## Prompt 012 — Handover check, rename request, run instructions
+
+Date: 2026-09-25
+
+### AI review (mistakes / corrections)
+
+| AI suggestion | Correction |
+|---------------|------------|
+| Implied a rename might be needed in code | Verified first; nothing to change in git |
+| Listed run steps before checking host | Machine had no Java, no Node 20, no `.env` — steps were right but environment wasn't ready |
+
+**SpecStory:** `../.specstory/history/history.md` (Step 1)
+
+---
+
+## Prompt 013 — Balanced frontend and backend enhancements
+
+Date: 2026-09-25
+
+### Prompt
+
+Improve FE and BE: dashboard summary, server pagination/sorting, debounced search, query indexes, tests. Keep API backward compatible when pagination params omitted.
+
+### Result
+
+**Backend:** Optional `page`/`size`/`sort` on `GET /api/tickets`; `GET /api/tickets/summary`; `TicketListResponse` metadata; `V2__ticket_list_indexes.sql`; validator + integration tests.
+
+**Frontend:** Summary-driven stat cards (incl. CANCELLED), debounced search, pagination, sortable columns, refresh overlay, abortable fetches; `ticket-list-params.ts`, `ticket-stats.ts`, CSS for pagination/sort.
+
+**Spec:** Updated `api-contract.md`, `requirements.md` (pagination no longer OOS), `test-strategy.md` SF-007–SF-009.
+
+### AI review (mistakes / corrections)
+
+| Issue | What went wrong | Fix |
+|-------|-----------------|-----|
+| `TicketSpecifications` visibility | Package-private class used from `TicketService` | Made class + `findPage` public — backend wouldn't compile |
+| Table columns | Extra Created column during sort work | Restored original column order |
+| Page reset `useEffect` | Compared identical filter objects | Reset page when debounced keyword changes |
+
+**Verification:** Frontend `npm test` + `npm run build` passed on Node 20.20.2. Backend tests deferred until JDK installed (Prompt 014).
+
+**SpecStory:** `../.specstory/history/history.md` (Steps 2–3)
+
+---
+
+## Prompt 014 — Local environment troubleshooting (Node, Java, PostgreSQL)
+
+Date: 2026-09-25
+
+### Prompts (same day, sequential)
+
+1. UI error: `Unexpected token 't', "internal S"... is not valid JSON`
+2. `JAVA_HOME environment variable is not defined correctly` on `./mvnw spring-boot:run`
+3. `Failed to configure a DataSource: 'url' attribute is not specified`
+4. How to push to GitHub
+5. Set up prompt history / SpecStory folders
+
+### Result
+
+**JSON error:** Next.js proxy returned plain-text `Internal Server Error` because backend wasn't on 8080 — not a frontend JSON bug. Improved `api.ts` to handle non-JSON bodies with a clear message; still requires API running.
+
+**JAVA_HOME:** Installed Temurin JDK 21 under `~/.local/java/`; added `JAVA_HOME` to `~/.bashrc`. `sudo apt install openjdk-21-jdk` was suggested first but failed without sudo password.
+
+**DataSource:** `.env` still had `<database>` placeholders; Spring Boot doesn't load `.env` by default. Fixed `application.yml` (defaults + `spring.config.import` for `../.env`), updated `.env.example`, added `backend/run-dev.sh` and `scripts/setup-local-db.sh`.
+
+**GitHub:** Remote `origin` → `https://github.com/Rakesh-Kumar-1996/support-ticket-management.git`; standard `git add` / `commit` / `push origin main`; `.env` stays gitignored.
+
+**Prompt history:** Added `.specstory/history/` session files + this appendix.
+
+### AI review (mistakes / corrections)
+
+| AI suggestion | Why we corrected it |
+|---------------|---------------------|
+| JSON parse fix = problem solved | Symptom fix only; root cause was stopped backend |
+| Use `apt` for Java/PostgreSQL in agent shell | No passwordless sudo — used user-local JDK instead |
+| Assume `.env` is picked up by Spring Boot | It isn't unless exported or imported — documented + configured import |
+| Backend "verified" when background task exited 137 | Process started then was killed; user must run `./run-dev.sh` in their own terminal |
+
+**SpecStory:** `../.specstory/history/history.md` (Steps 4–10)
+
+---
+
+## Prompt history tooling
+
+Date: 2026-09-25
+
+Repository layout for prompt capture:
+
+```
+.specstory/
+  README.md
+  history/
+    session-history.md   ← single file: human input + AI output, every step
+docs/
+  prompt-history.md      (this file — longer index for spec-driven workflow)
+```
+
+Append new Cursor steps to `history.md` using `**Human:**` / `**AI:**` blocks. No personal names in that file. That file now contains the **full project build** (Steps 1–37): requirements → spec → plan → T-001–T-025 → fixes → enhancements → local setup.

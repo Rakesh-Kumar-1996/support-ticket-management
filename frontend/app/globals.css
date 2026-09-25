@@ -398,7 +398,13 @@ a:hover {
 
 @media (min-width: 768px) {
   .stats-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .stats-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 
@@ -445,6 +451,10 @@ a:hover {
 
 .stat-card-closed {
   --stat-accent: #64748b;
+}
+
+.stat-card-cancelled {
+  --stat-accent: #be123c;
 }
 
 .stat-label {
@@ -852,6 +862,53 @@ a:hover {
   .ticket-mobile-list {
     display: block;
   }
+}
+
+.ticket-table-card.is-refreshing {
+  opacity: 0.72;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.sort-button:hover,
+.sort-button.is-active {
+  color: var(--color-primary);
+}
+
+.sort-indicator {
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
+
+.pagination-status {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
 }
 
 .view-link {

@@ -169,4 +169,43 @@ class TicketRequestValidatorTest {
         assertNull(TicketRequestValidator.clearable(""));
         assertEquals("  keep  ", TicketRequestValidator.clearable("  keep  "));
     }
+
+    @Test
+    void parsePageRejectsInvalidValues() {
+        assertEquals(1, TicketRequestValidator.parsePage(null));
+        assertEquals(2, TicketRequestValidator.parsePage(2));
+        assertThrows(TicketValidationException.class, () -> TicketRequestValidator.parsePage(0));
+    }
+
+    @Test
+    void parseSizeRejectsInvalidValues() {
+        assertEquals(TicketRequestValidator.DEFAULT_PAGE_SIZE, TicketRequestValidator.parseSize(null));
+        assertThrows(TicketValidationException.class, () -> TicketRequestValidator.parseSize(0));
+        assertThrows(
+                TicketValidationException.class,
+                () -> TicketRequestValidator.parseSize(TicketRequestValidator.MAX_PAGE_SIZE + 1)
+        );
+    }
+
+    @Test
+    void parseSortAcceptsWhitelistAndRejectsInvalid() {
+        assertEquals("createdAt", TicketRequestValidator.parseSort(null).iterator().next().getProperty());
+        assertEquals("updatedAt", TicketRequestValidator.parseSort("updatedAt,asc").iterator().next().getProperty());
+        assertThrows(TicketValidationException.class, () -> TicketRequestValidator.parseSort("invalid,desc"));
+        assertThrows(TicketValidationException.class, () -> TicketRequestValidator.parseSort("createdAt,up"));
+    }
+
+    @Test
+    void parseListQueryDefaultsToUnpaginated() {
+        var query = TicketRequestValidator.parseListQuery(null, null, null);
+        assertFalse(query.paginated());
+    }
+
+    @Test
+    void parseListQueryPaginatesWhenPageOrSizeProvided() {
+        var query = TicketRequestValidator.parseListQuery(2, 10, "title,asc");
+        assertTrue(query.paginated());
+        assertEquals(1, query.pageable().getPageNumber());
+        assertEquals(10, query.pageable().getPageSize());
+    }
 }

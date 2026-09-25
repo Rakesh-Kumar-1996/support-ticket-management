@@ -128,7 +128,10 @@ Setup for SM-I-001: walk OPEN → IN_PROGRESS → RESOLVED → CLOSED then attem
 | SF-003 | `q` matches neither | ticket absent |
 | SF-004 | `status=OPEN` excludes other statuses | |
 | SF-005 | `q` + `status` together | AND semantics |
-| SF-006 | No query params | all tickets (v1, no pagination) |
+| SF-006 | No query params | all tickets (unpaginated) |
+| SF-007 | `page` + `size` | paginated slice with metadata |
+| SF-008 | `sort=updatedAt,asc` | ordered results with stable `id` tie-break |
+| SF-009 | `GET /tickets/summary` | counts by status including `CANCELLED` |
 
 ---
 

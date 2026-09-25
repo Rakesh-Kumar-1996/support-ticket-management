@@ -4,10 +4,12 @@ server:
     context-path: /api
 
 spring:
+  config:
+    import: optional:file:../.env[.properties]
   datasource:
-    url: ${SPRING_DATASOURCE_URL:}
-    username: ${SPRING_DATASOURCE_USERNAME:}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/support_tickets}
+    username: ${SPRING_DATASOURCE_USERNAME:support}
+    password: ${SPRING_DATASOURCE_PASSWORD:support}
   jpa:
     open-in-view: false
     hibernate:
